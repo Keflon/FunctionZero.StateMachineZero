@@ -6,19 +6,26 @@ using System.Runtime.CompilerServices;
 
 namespace FunctionZero.StateMachineZero
 {
-	public class StateMachine<TStates, TMessages> : INotifyPropertyChanged
+	public class StateMachine<TState, TMessage, TPayload> : INotifyPropertyChanged
 	{
+
+		private readonly MessageQueue _messageQueue;
+		private TState _state;
+
+		public event EventHandler<StateChangeEventArgs<TState, TPayload>> StateChanging;
+		public event EventHandler<StateChangeEventArgs<TState, TPayload>> StateChanged;
+		public event EventHandler<UnknownStateTransitionEventArgs<TState, TMessage, TPayload>> UnknownStateTransition;
+
 		/// <summary>
-		/// If this  changes, an event is raised. You can bind UI to this property.
-		/// There is also a StateChanged event that carries more information.
-		/// This raises a propertyChanged event immediately BEFORE the StateChanged event.
+		/// This raises a propertyChanged event inbetween the StateChanging and StateChanged events.
+		/// StateChanging and StateChanged events carry more information.
 		/// </summary>
-		public TStates State
+		public TState State
 		{
-			get { return _state; }
+			get => _state;
 			private set
 			{
-				if(_state.ToString() != value.ToString())
+				if(!_state.Equals(value))
 				{
 					_state = value;
 					OnPropertyChanged();
@@ -26,6 +33,9 @@ namespace FunctionZero.StateMachineZero
 			}
 		}
 
+		/// <summary>
+		/// A friendly name for each machine instance. Useful for debugging.
+		/// </summary>
 		public string Name { get; }
 
 		/// <summary>
@@ -33,186 +43,129 @@ namespace FunctionZero.StateMachineZero
 		/// </summary>
 		public object StateObject { get; }
 
-		public delegate StateChangingEventArgs<TStates> GetStateChangeEventArgsDelegate(TMessages message, object messagePayload);
+		public delegate TState GetStateDelegate(TMessage message);
 
-		private Dictionary<StateTransition<TStates, TMessages>, GetStateChangeEventArgsDelegate> StateTransitionList { get; }
+		private Dictionary<StateTransition<TState, TMessage>, GetStateDelegate> StateTransitions { get; }
 
 		/// <summary>
 		/// Constructor.
 		/// </summary>
+		/// <param name="queue">The queue this state machine is bound to.</param>
 		/// <param name="startingState">The initial state for the state machine.</param>
 		/// <param name="name">Optional name for the state machine.</param>
 		/// <param name="stateObject">A user object that can be accessed indirectly via the PropertyChanged or StateChanged event.</param>
-		public StateMachine(TStates startingState, string name = "Unnamed", object stateObject = null)
+		public StateMachine(MessageQueue queue, TState startingState, string name = "Unnamed", object stateObject = null)
 		{
-			// TODO: Find a way to do this for Universal libraries.
-			//if(!typeof(TStates).IsEnum)
-			//	throw new ArgumentException("TStates must be an enumerated type");
-			//if(!typeof(TMessages).IsEnum)
-			//	throw new ArgumentException("TMessages must be an enumerated type");
+			// TODO: Find a way to confirm TState and TMessages are enums.
+			_messageQueue = queue;
 
-			_messageQueue = new Queue<Tuple<TMessages, object>>();
-			_messageStack = new Stack<Tuple<TMessages, object>>();
-
-			StateTransitionList = new Dictionary<StateTransition<TStates, TMessages>, GetStateChangeEventArgsDelegate>();
-			State = startingState;
+			StateTransitions = new Dictionary<StateTransition<TState, TMessage>, GetStateDelegate>();
 			Name = name;
 			StateObject = stateObject;
-		}
-
-		public int PushMessage(TMessages message, object payload = null)
-		{
-			_messageStack.Push(new Tuple<TMessages, object>(message, payload));
-			return _messageStack.Count;
-		}
-
-		public int PopMessage()
-		{
-			var popped = _messageStack.Pop();
-			this.EnqueueMessage(popped.Item1, popped.Item2);
-			return _messageStack.Count;
+			State = startingState;
 		}
 
 		/// <summary>
-		/// This method creates a new StateTransition to the  StateMachine.
+		/// This method adds a new StateTransition to the  StateMachine.
 		/// </summary>
 		/// <param name="currentState">This is the state the machine must be in for this transition to apply.</param>
 		/// <param name="message">This is the message that is given to the machine</param>
-		/// <param name="getNextState">This is a method that accepts a message and a message-payload and returns a new state with a resultant payload.
-		/// The input message and payload for this delegate are sourced from the EnqueueMessage call (i.e. when a message is queued)</param>
-		public void Add(TStates currentState, TMessages message, GetStateChangeEventArgsDelegate getNextState)
+		/// <param name="getNextState">This is a method that accepts a message and returns the state the message transitions to.</param>
+		public void Add(TState currentState, TMessage message, GetStateDelegate getNextState/* TODO: transitionFiredEvent*/)
 		{
-			this.StateTransitionList.Add(new StateTransition<TStates, TMessages>(currentState, message), getNextState);
+			this.StateTransitions.Add(new StateTransition<TState, TMessage>(currentState, message), getNextState);
 		}
 
 		/// <summary>
-		/// This method creates a new StateTransition to the StateMachine.
+		/// This method adds a new StateTransition to the StateMachine.
 		/// </summary>
 		/// <param name="currentState">This is the state the machine must be in for this transition to apply.</param>
 		/// <param name="message">This is the message that is given to the machine</param>
 		/// <param name="nextState">This is the state to change to when the message is processed.</param>
-		public void Add(TStates currentState, TMessages message, TStates nextState)
+		public void Add(TState currentState, TMessage message, TState nextState/* TODO: transitionFiredEvent*/)
 		{
-			this.Add(currentState, message, (messages, payload) => new StateChangingEventArgs<TStates>(nextState, payload));
+			this.Add(currentState, message, param => nextState);
 		}
 
-		private StateChangingEventArgs<TStates> GetNextState(TMessages message, object messagePayload)
+		/// <summary>
+		/// Returns the state a given message takes us to.
+		/// </summary>
+		/// <param name="message"></param>
+		/// <param name="state"></param>
+		/// <returns></returns>
+		private bool GetNextState(TMessage message, ref TState state)
 		{
-			StateTransition<TStates, TMessages> transition = new StateTransition<TStates, TMessages>(State, message);
-			GetStateChangeEventArgsDelegate nextStateGetter;
+			GetStateDelegate nextStateGetter;
 
-			if(!StateTransitionList.TryGetValue(transition, out nextStateGetter))
+			if(!StateTransitions.TryGetValue(new StateTransition<TState, TMessage>(State, message), out nextStateGetter))
 			{
-				//Debug.Assert(false, "State transition problem.");
-
-				var temp = UnknownStateTransition;
-
-				if(temp != null)
-				{
-					temp.Invoke(this, new UnknownStateTransitionEventArgs<TStates, TMessages>(State, message, messagePayload));
-				}
-				else
-				{
-					throw new Exception("Invalid transition: " + State + " -> " + message + " on machine '" + this.Name + "'");
-				}
-				return null;
+				return false;
 			}
-
-			return nextStateGetter(message, messagePayload);
+			state = nextStateGetter(message);
+			return true;
 		}
 
-		public event EventHandler<StateChangedEventArgs<TStates>> StateChanged;
+		protected virtual void OnNotifyStateChanging(StateChangeEventArgs<TState, TPayload> e)
+		{
+			StateChanging?.Invoke(this, e);
+		}
 
-		public event EventHandler<UnknownStateTransitionEventArgs<TStates, TMessages>> UnknownStateTransition;
-
-		protected virtual void OnNotifyStateChanged(StateChangedEventArgs<TStates> e)
+		protected virtual void OnNotifyStateChanged(StateChangeEventArgs<TState, TPayload> e)
 		{
 			StateChanged?.Invoke(this, e);
 		}
 
-		private bool _reentrancyGuard = false;
-
-		private TStates ProcessMessage(TMessages message, object messagePayload)
+		protected virtual void OnNotifyStateFault(UnknownStateTransitionEventArgs<TState, TMessage, TPayload> e)
 		{
-			StateChangingEventArgs<TStates> temp = GetNextState(message, messagePayload);
-
-			if(temp != null)
-			{
-				if(_reentrancyGuard == true)
-				{
-					throw new Exception("Broken");
-				}
-				else
-				{
-					_reentrancyGuard = true;
-
-					TStates oldState = State;
-					State = temp.NewState; // This is where the state is changed.	
-
-					// This is done here rather than in the OnPropertyChanged for State because the OnNotifyStateChangedEventArgs requires oldState and payLoad.
-					if(State.ToString() != oldState.ToString())
-					{
-						StateChangedEventArgs<TStates> retVal = new StateChangedEventArgs<TStates>(temp.NewState, oldState, temp.PayLoad);
-						OnNotifyStateChanged(retVal);
-					}
-					_reentrancyGuard = false;
-				}
-			}
-			return State;
+			UnknownStateTransition?.Invoke(this, e);
 		}
 
-		private readonly Queue<Tuple<TMessages, object>> _messageQueue;
-		private readonly Stack<Tuple<TMessages, object>> _messageStack;
-		private TStates _state;
+		private bool _reentrancyGuard = false;
 
-		/// <summary>
-		///     This is not threadsafe.
-		///     Sending a message to a this can cause it to change state, which in turn raises a StateChanged event.
-		///     This method puts a message into the message queue. If the queue is empty, the message gets processed immediately.
-		///     Processing the message may cause further messages to be queued up, and when the original message is complete
-		///     those further messages are processed. They in turn may queue up further messages and so on.
-		///     The queue is used so that a message from a StateChanged subscriber cannot cause a state change while the StateChanged event is still notifying other subscribers.
-		///     More broadly speaking, it prevents a message from being processed while a previous message is still being processed.
-		/// </summary>
-		/// <param name="message">The message to be queued</param>
-		/// <param name="description">Optional parameter can be used by the message consumer.</param>
-		/// <param name="payLoad">Optional parameter may be used by the message consumer.</param>
-		/// <param name="messagePayload"></param>
-		/// <returns></returns>
-		public int EnqueueMessage(TMessages message, object messagePayload = null)
+		private TState ProcessMessage(TMessage message, TPayload messagePayload)
 		{
-			if(_messageQueue.Count == 0)
+			if(_reentrancyGuard == true)
 			{
-				_messageQueue.Enqueue(new Tuple<TMessages, object>(message, messagePayload));
-				bool debugFlag = true;
-				while(_messageQueue.Count != 0)
-				{
-					Tuple<TMessages, object> nextMessage = _messageQueue.Peek();
+				throw new Exception("Broken");
+			}
+			_reentrancyGuard = true;
 
-					if(debugFlag == true)
-					{
-						Debug.WriteLine("Starting immediate message on       " + this.Name + "  : " + nextMessage.ToString());
-						debugFlag = false;
-					}
-					else
-					{
-						Debug.WriteLine("Starting dequeued message on        " + this.Name + "  : " + nextMessage.ToString());
-					}
+			TState nextState = default(TState);
 
-					ProcessMessage(nextMessage.Item1, nextMessage.Item2); // This might cause more messages to be queued for processing AFTER THIS MESSAGE HAS COMPLETED!
-					Debug.WriteLine("Ending message on                   " + this.Name + "  : " + nextMessage.ToString());
-					_messageQueue.Dequeue();
-				}
+			if(GetNextState(message, ref nextState) == true)
+			{
+				// Notify even if state isn't changing / hasn't changed.
+				TState oldState = State;
+				OnNotifyStateChanging(new StateChangeEventArgs<TState, TPayload>(nextState, oldState, StateChangeMode.Changing, messagePayload));
+				State = nextState; // This is where the state is changed.	
+				OnNotifyStateChanged(new StateChangeEventArgs<TState, TPayload>(nextState, oldState, StateChangeMode.Changed, messagePayload));
 			}
 			else
 			{
-				Debug.WriteLine("Enqueueing message on               " + this.Name + "  : " + message.ToString());
-				_messageQueue.Enqueue(new Tuple<TMessages, object>(message, messagePayload));
+				OnNotifyStateFault(new UnknownStateTransitionEventArgs<TState, TMessage, TPayload>(State, message, messagePayload));
 			}
+			_reentrancyGuard = false;
+			return State;
+		}
 
-			int retval = _messageQueue.Count;
+		/// <summary>
+		/// This posts a message and a payload to the message queue associated with this machine.
+		/// If the queue is empty, the message will be processed immediately, otherwise it will be queued
+		/// until any pre-existing messages are processed.
+		/// If processing this message causes further messages to be posted, those messages will be processed
+		/// atomically and in order, i.e. a message will not be processed during the processing of an earlier message.
+		/// </summary>
+		/// <param name="message"></param>
+		/// <param name="messagePayload"></param>
+		/// <returns></returns>
+		public int PostMessage(TMessage message, TPayload messagePayload = default(TPayload))
+		{
+			_messageQueue.PostMessage(() =>
+			{
+				ProcessMessage(message, messagePayload);
+			});
 
-			return retval;
+			return _messageQueue.Count;
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -222,12 +175,17 @@ namespace FunctionZero.StateMachineZero
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
-		public void AddStateEnterEvent(TStates state, Action<object> action, object o)
+		public void AddStateEnterEvent(TState state, Action<object> action, object o)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void AddStateLeaveEvent(TStates state, Action<object> action, object o)
+		public void AddStateLeaveEvent(TState state, Action<object> action, object o)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void AddTransitionFiredEvent()
 		{
 			throw new NotImplementedException();
 		}

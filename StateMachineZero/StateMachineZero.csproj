@@ -10,6 +10,7 @@
     <PackageReleaseNotes>First release</PackageReleaseNotes>
     <Copyright>Copyright 2016 (c) Function Zero Ltd. All rights reserved.</Copyright>
     <PackageTags>StateMachine State Machine</PackageTags>
+    <RootNamespace>FunctionZero.StateMachineZero</RootNamespace>
   </PropertyGroup>
 
 </Project>

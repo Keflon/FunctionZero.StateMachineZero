@@ -2,17 +2,17 @@
 
 namespace FunctionZero.StateMachineZero
 {
-	public class UnknownStateTransitionEventArgs<TState, TMessage> : EventArgs
+	public class UnknownStateTransitionEventArgs<TState, TMessage, TPayload> : EventArgs
 	{
 		public TState CurrentState { get; }
 		public TMessage Message { get; }
-		public object PayLoad { get; }
+		public TPayload PayLoad { get; }
 
-		public UnknownStateTransitionEventArgs(TState currentState, TMessage message, object payLoad)
+		public UnknownStateTransitionEventArgs(TState currentState, TMessage message, TPayload payload)
 		{
 			CurrentState = currentState;
 			Message = message;
-			PayLoad = payLoad;
+			PayLoad = payload;
 		}
 	}
 }
