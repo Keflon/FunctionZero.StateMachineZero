@@ -8,13 +8,12 @@ namespace FunctionZero.StateMachineZero
 {
 	public class StateMachine<TState, TMessage, TPayload> : INotifyPropertyChanged
 	{
-
 		private readonly MessageQueue _messageQueue;
 		private TState _state;
 
 		public event EventHandler<StateChangeEventArgs<TState, TPayload>> StateChanging;
 		public event EventHandler<StateChangeEventArgs<TState, TPayload>> StateChanged;
-		public event EventHandler<UnknownStateTransitionEventArgs<TState, TMessage, TPayload>> UnknownStateTransition;
+		public event EventHandler<BadTransitionEventArgs<TState, TMessage, TPayload>> BadTransition;
 
 		/// <summary>
 		/// This raises a propertyChanged event inbetween the StateChanging and StateChanged events.
@@ -115,14 +114,14 @@ namespace FunctionZero.StateMachineZero
 			StateChanged?.Invoke(this, e);
 		}
 
-		protected virtual void OnNotifyStateFault(UnknownStateTransitionEventArgs<TState, TMessage, TPayload> e)
+		protected virtual void OnNotifyStateFault(BadTransitionEventArgs<TState, TMessage, TPayload> e)
 		{
-			UnknownStateTransition?.Invoke(this, e);
+			BadTransition?.Invoke(this, e);
 		}
 
 		private bool _reentrancyGuard = false;
 
-		private TState ProcessMessage(TMessage message, TPayload messagePayload)
+		private void ProcessMessage(TMessage message, TPayload messagePayload)
 		{
 			if(_reentrancyGuard == true)
 			{
@@ -132,20 +131,28 @@ namespace FunctionZero.StateMachineZero
 
 			TState nextState = default(TState);
 
-			if(GetNextState(message, ref nextState) == true)
+			TState oldState = State;
+			bool faulted = false;
+			if(GetNextState(message, ref nextState) == false)
 			{
-				// Notify even if state isn't changing / hasn't changed.
-				TState oldState = State;
-				OnNotifyStateChanging(new StateChangeEventArgs<TState, TPayload>(nextState, oldState, StateChangeMode.Changing, messagePayload));
-				State = nextState; // This is where the state is changed.	
-				OnNotifyStateChanged(new StateChangeEventArgs<TState, TPayload>(nextState, oldState, StateChangeMode.Changed, messagePayload));
+				var faultEventArgs = new BadTransitionEventArgs<TState, TMessage, TPayload>(State, message, messagePayload);
+
+				OnNotifyStateFault(faultEventArgs);
+
+				if(faultEventArgs.RequestedState == null)
+					return;
+
+				faulted = true;
+				nextState = faultEventArgs.RequestedState.State;
+				messagePayload = faultEventArgs.RequestedState.Payload;
 			}
-			else
-			{
-				OnNotifyStateFault(new UnknownStateTransitionEventArgs<TState, TMessage, TPayload>(State, message, messagePayload));
-			}
+
+			// Notify even if state isn't changing / hasn't changed.
+			OnNotifyStateChanging(new StateChangeEventArgs<TState, TPayload>(nextState, oldState, StateChangeMode.Changing, messagePayload, faulted));
+			State = nextState; // This is where the state is changed.	
+			OnNotifyStateChanged(new StateChangeEventArgs<TState, TPayload>(nextState, oldState, StateChangeMode.Changed, messagePayload, faulted));
+
 			_reentrancyGuard = false;
-			return State;
 		}
 
 		/// <summary>

@@ -13,14 +13,16 @@ namespace FunctionZero.StateMachineZero
 		public TState OldState { get; }
 		public StateChangeMode ChangeType { get; }
 		public TPayload PayLoad { get; }
+		public bool StateFaultOccured { get; }
 
-		public StateChangeEventArgs(TState newState, TState oldState, StateChangeMode changeType, TPayload payLoad)
+		public StateChangeEventArgs(TState newState, TState oldState, StateChangeMode changeType, TPayload payLoad, bool stateFaultOccured)
 		{
 			// TODO: Find a way to confirm TState is an enum.
 			NewState = newState;
 			OldState = oldState;
 			ChangeType = changeType;
 			PayLoad = payLoad;
+			StateFaultOccured = stateFaultOccured;
 		}
 	}
 }
