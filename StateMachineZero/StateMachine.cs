@@ -140,7 +140,10 @@ namespace FunctionZero.StateMachineZero
 				OnNotifyStateFault(faultEventArgs);
 
 				if(faultEventArgs.RequestedState == null)
+				{
+					_reentrancyGuard = false;
 					return;
+				}
 
 				faulted = true;
 				nextState = faultEventArgs.RequestedState.State;

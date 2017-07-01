@@ -6,30 +6,29 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StateMachineZeroTests
 {
-	enum States
-	{
-		A,
-		B,
-		C,
-		D,
-		E
-	}
-
-	enum Messages
-	{
-		a,
-		b,
-		c,
-		d,
-		e
-	}
-
-
     [TestClass]
-    public class UnitTest1
-    {
-	    [TestMethod]
-	    public void TestBasic()
+    public class BasicFunctionality
+	{
+	    enum States
+	    {
+		    A,
+		    B,
+		    C,
+		    D,
+		    E
+	    }
+
+	    enum Messages
+	    {
+		    a,
+		    b,
+		    c,
+		    d,
+		    e
+	    }
+
+		[TestMethod]
+	    public void TestBasicFunctionality()
 	    {
 			MessageQueue q = new MessageQueue();
 		    var machine = new StateMachine<States, Messages, object>(q, States.A, "");
