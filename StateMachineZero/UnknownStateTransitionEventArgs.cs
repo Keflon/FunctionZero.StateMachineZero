@@ -8,7 +8,7 @@ namespace FunctionZero.StateMachineZero
 		public TMessage Message { get; }
 		public TPayload PayLoad { get; }
 
-		internal StatePayload<TState, TPayload> RequestedState { get; set; }
+		internal StatePayload<TState, TPayload> RequestedState { get; private set; }
 
 		public BadTransitionEventArgs(TState currentState, TMessage message, TPayload payload)
 		{
