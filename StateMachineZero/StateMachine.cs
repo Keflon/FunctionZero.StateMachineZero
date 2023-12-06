@@ -42,7 +42,7 @@ namespace FunctionZero.StateMachineZero
 		/// </summary>
 		public object StateObject { get; }
 
-		public delegate TState GetStateDelegate(TMessage message);
+		public delegate TState GetStateDelegate(TMessage message, TPayload payload);
 
 		private Dictionary<StateTransition<TState, TMessage>, GetStateDelegate> StateTransitions { get; }
 
@@ -83,7 +83,7 @@ namespace FunctionZero.StateMachineZero
 		/// <param name="nextState">This is the state to change to when the message is processed.</param>
 		public void Add(TState currentState, TMessage message, TState nextState/* TODO: transitionFiredEvent*/)
 		{
-			this.Add(currentState, message, param => nextState);
+			this.Add(currentState, message, (state, payload) => nextState);
 		}
 
 		/// <summary>
@@ -92,7 +92,7 @@ namespace FunctionZero.StateMachineZero
 		/// <param name="message"></param>
 		/// <param name="state"></param>
 		/// <returns></returns>
-		private bool GetNextState(TMessage message, ref TState state)
+		private bool GetNextState(TMessage message, TPayload payload, ref TState state)
 		{
 			GetStateDelegate nextStateGetter;
 
@@ -100,7 +100,7 @@ namespace FunctionZero.StateMachineZero
 			{
 				return false;
 			}
-			state = nextStateGetter(message);
+			state = nextStateGetter(message, payload);
 			return true;
 		}
 
@@ -133,7 +133,7 @@ namespace FunctionZero.StateMachineZero
 
 			TState oldState = State;
 			bool faulted = false;
-			if(GetNextState(message, ref nextState) == false)
+			if(GetNextState(message, messagePayload, ref nextState) == false)
 			{
 				var faultEventArgs = new BadTransitionEventArgs<TState, TMessage, TPayload>(State, message, messagePayload);
 

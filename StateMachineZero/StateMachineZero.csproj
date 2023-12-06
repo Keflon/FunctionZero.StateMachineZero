@@ -3,15 +3,15 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <PackageId>FunctionZero.StateMachineZero</PackageId>
-    <PackageVersion>1.0.3</PackageVersion>
+    <PackageVersion>2.0.0-pre1</PackageVersion>
     <Authors>Keith Pickford</Authors>
     <Description>State Machine with registered transitions</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>Second release.</PackageReleaseNotes>
-    <Copyright>Copyright 2020 (c) Function Zero Ltd.</Copyright>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <Copyright>Copyright 2023 Function Zero Ltd.</Copyright>
     <PackageTags>StateMachine State Machine</PackageTags>
     <RootNamespace>FunctionZero.StateMachineZero</RootNamespace>
-    <Version>1.0.3-pre1</Version>
+    <Version>2.0.0-pre1</Version>
     <PackageProjectUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</RepositoryUrl>
   </PropertyGroup>
