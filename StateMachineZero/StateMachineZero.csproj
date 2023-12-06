@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <PackageId>FunctionZero.StateMachineZero</PackageId>
-    <PackageVersion>1.0.1</PackageVersion>
+    <PackageVersion>1.0.3</PackageVersion>
     <Authors>Keith Pickford</Authors>
     <Description>State Machine with registered transitions</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -11,7 +11,7 @@
     <Copyright>Copyright 2020 (c) Function Zero Ltd.</Copyright>
     <PackageTags>StateMachine State Machine</PackageTags>
     <RootNamespace>FunctionZero.StateMachineZero</RootNamespace>
-    <Version>1.0.1</Version>
+    <Version>1.0.3-pre1</Version>
     <PackageProjectUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</RepositoryUrl>
   </PropertyGroup>
