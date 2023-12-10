@@ -1,23 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <PackageId>FunctionZero.StateMachineZero</PackageId>
-    <PackageVersion>2.0.0-pre1</PackageVersion>
-    <Authors>Keith Pickford</Authors>
-    <Description>State Machine with registered transitions</Description>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes></PackageReleaseNotes>
-    <Copyright>Copyright 2023 Function Zero Ltd.</Copyright>
-    <PackageTags>StateMachine State Machine</PackageTags>
-    <RootNamespace>FunctionZero.StateMachineZero</RootNamespace>
-    <Version>2.0.0-pre1</Version>
-    <PackageProjectUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</RepositoryUrl>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageIcon>F0 gravatar.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <None Update="F0 gravatar.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
