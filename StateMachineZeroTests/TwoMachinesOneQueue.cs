@@ -83,7 +83,7 @@ namespace StateMachineZeroTests
             e.PayLoad.Append("Fault:" + e.CurrentState + ";" + e.Message + " ");
         }
 
-        private void MachineA_StateChanged(object sender, StateChangeEventArgs<StatesA, StringBuilder> e)
+        private void MachineA_StateChanged(object sender, StateChangeEventArgs<StatesA, MessagesA, StringBuilder> e)
         {
             e.PayLoad.Append(e.NewState + " ");
 
@@ -111,7 +111,7 @@ namespace StateMachineZeroTests
             }
         }
 
-        private void MachineBOnStateChanged(object sender, StateChangeEventArgs<StatesB, StringBuilder> e)
+        private void MachineBOnStateChanged(object sender, StateChangeEventArgs<StatesB, MessagesB, StringBuilder> e)
         {
             e.PayLoad.Append(e.NewState + " ");
 

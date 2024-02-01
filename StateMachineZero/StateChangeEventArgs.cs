@@ -7,20 +7,23 @@ namespace FunctionZero.StateMachineZero
 		Changing = 0,
 		Changed
 	}
-	public class StateChangeEventArgs<TState, TPayload> : EventArgs
+	public class StateChangeEventArgs<TState, TMessage, TPayload> 
+		: EventArgs where TState : Enum where TMessage : Enum
 	{
 		public TState NewState { get; }
 		public TState OldState { get; }
-		public StateChangeMode ChangeType { get; }
+        public TMessage Message { get; }
+        public StateChangeMode ChangeType { get; }
 		public TPayload PayLoad { get; }
 		public bool StateFaultOccured { get; }
 
-		public StateChangeEventArgs(TState newState, TState oldState, StateChangeMode changeType, TPayload payLoad, bool stateFaultOccured)
+		public StateChangeEventArgs(TState newState, TState oldState, TMessage message, StateChangeMode changeType, TPayload payLoad, bool stateFaultOccured)
 		{
 			// TODO: Find a way to confirm TState is an enum.
 			NewState = newState;
 			OldState = oldState;
-			ChangeType = changeType;
+            Message = message;
+            ChangeType = changeType;
 			PayLoad = payLoad;
 			StateFaultOccured = stateFaultOccured;
 		}

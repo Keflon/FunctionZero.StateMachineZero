@@ -6,15 +6,22 @@ using System.Runtime.CompilerServices;
 
 namespace FunctionZero.StateMachineZero
 {
-    public class StateMachine<TState, TMessage, TPayload> : INotifyPropertyChanged where TState : Enum where TMessage : Enum
+    public class StateMachine<TState, TMessage, TPayload> 
+        : INotifyPropertyChanged 
+        where TState : Enum where TMessage : Enum
     {
         private readonly MessageQueue _messageQueue;
         private readonly Dictionary<TState, StateAction> _allStatesEntered;
         private readonly Dictionary<TState, StateAction> _allStatesLeft;
+
+        private readonly Dictionary<TState, StateAction> _allStatesEntering;
+        private readonly Dictionary<TState, StateAction> _allStatesLeaving;
+
+
         private TState _state;
 
-        public event EventHandler<StateChangeEventArgs<TState, TPayload>> StateChanging;
-        public event EventHandler<StateChangeEventArgs<TState, TPayload>> StateChanged;
+        public event EventHandler<StateChangeEventArgs<TState, TMessage, TPayload>> StateChanging;
+        public event EventHandler<StateChangeEventArgs<TState, TMessage, TPayload>> StateChanged;
         //private event EventHandler<StateChangeEventArgs<TState, TPayload>> StateEntered;
 
 
@@ -67,9 +74,21 @@ namespace FunctionZero.StateMachineZero
             _stateTransitions = new Dictionary<StateTransition<TState, TMessage>, GetStateDelegate>();
             _allStatesEntered = new Dictionary<TState, StateAction>();
             _allStatesLeft = new Dictionary<TState, StateAction>();
+            _allStatesEntering = new Dictionary<TState, StateAction>();
+            _allStatesLeaving = new Dictionary<TState, StateAction>();
             Name = name;
             StateObject = stateObject;
             State = startingState;
+
+            Array values = Enum.GetValues(typeof(TState));
+
+            foreach (TState val in values)
+            {
+                _allStatesEntered[val] = (fromState, toState, payload) => { };
+                _allStatesLeft[val] = (fromState, toState, payload) => { };
+                _allStatesEntering[val] = (fromState, toState, payload) => { };
+                _allStatesLeaving[val] = (fromState, toState, payload) => { };
+            }
         }
 
         /// <summary>
@@ -80,12 +99,6 @@ namespace FunctionZero.StateMachineZero
         /// <param name="getNextState">This is a method that accepts a message and returns the state the message transitions to.</param>
         public void Add(TState currentState, TMessage message, GetStateDelegate getNextState/* TODO: transitionFiredEvent*/)
         {
-            if (!_allStatesEntered.ContainsKey(currentState))
-                _allStatesEntered[currentState] = (fromState, toState, payload) => { };
-
-            if (!_allStatesLeft.ContainsKey(currentState))
-                _allStatesLeft[currentState] = (fromState, toState, payload) => { };
-
             this._stateTransitions.Add(new StateTransition<TState, TMessage>(currentState, message), getNextState);
         }
 
@@ -118,17 +131,18 @@ namespace FunctionZero.StateMachineZero
             return true;
         }
 
-        protected virtual void OnNotifyStateChanging(StateChangeEventArgs<TState, TPayload> e)
+        protected virtual void OnNotifyStateChanging(StateChangeEventArgs<TState, TMessage, TPayload> e)
         {
-
+            _allStatesLeaving[e.OldState](e.OldState, e.NewState, e.PayLoad);
+            _allStatesEntering[e.NewState](e.OldState, e.NewState, e.PayLoad);
             StateChanging?.Invoke(this, e);
-            _allStatesLeft[e.OldState](e.OldState, e.NewState, e.PayLoad);
         }
 
-        protected virtual void OnNotifyStateChanged(StateChangeEventArgs<TState, TPayload> e)
+        protected virtual void OnNotifyStateChanged(StateChangeEventArgs<TState, TMessage, TPayload> e)
         {
-            StateChanged?.Invoke(this, e);
+            _allStatesLeft[e.OldState](e.OldState, e.NewState, e.PayLoad);
             _allStatesEntered[e.NewState](e.OldState, e.NewState, e.PayLoad);
+            StateChanged?.Invoke(this, e);
         }
 
         protected virtual void OnNotifyStateFault(BadTransitionEventArgs<TState, TMessage, TPayload> e)
@@ -168,9 +182,9 @@ namespace FunctionZero.StateMachineZero
             }
 
             // Notify even if state isn't changing / hasn't changed.
-            OnNotifyStateChanging(new StateChangeEventArgs<TState, TPayload>(nextState, oldState, StateChangeMode.Changing, messagePayload, faulted));
+            OnNotifyStateChanging(new StateChangeEventArgs<TState, TMessage, TPayload>(nextState, oldState, message, StateChangeMode.Changing, messagePayload, faulted));
             State = nextState; // This is where the state is changed.	
-            OnNotifyStateChanged(new StateChangeEventArgs<TState, TPayload>(nextState, oldState, StateChangeMode.Changed, messagePayload, faulted));
+            OnNotifyStateChanged(new StateChangeEventArgs<TState, TMessage, TPayload>(nextState, oldState, message, StateChangeMode.Changed, messagePayload, faulted));
 
             _reentrancyGuard = false;
         }
@@ -211,6 +225,16 @@ namespace FunctionZero.StateMachineZero
         public void SetStateLeaveEvent(TState state, StateAction action)
         {
             _allStatesLeft[state] = action;
+        }
+        public void SetStateEnteringEvent(TState state, StateAction action)
+        {
+            _allStatesEntering[state] = action;
+
+        }
+
+        public void SetStateLeavingEvent(TState state, StateAction action)
+        {
+            _allStatesLeaving[state] = action;
         }
 
         //public void AddTransitionFiredEvent()

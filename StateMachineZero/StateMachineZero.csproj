@@ -4,22 +4,24 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageIcon>F0 gravatar.png</PackageIcon>
     <PackageProjectUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</PackageProjectUrl>
-    <Copyright>2023 FunctionZero Ltd.</Copyright>
+    <Copyright>2024 FunctionZero Ltd.</Copyright>
     <Description>A highly configurable finite-state-machine implementation with pre-registered transitions.</Description>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</RepositoryUrl>
     <PackageTags>StateMachine State machine</PackageTags>
-    <PackageReleaseNotes>Like a phoenix from the ashes ...</PackageReleaseNotes>
-    <Version>2.0.0-pre4</Version>
-    <Authors>Keflon</Authors>
+    <PackageReleaseNotes>Fixed SetStateLeaveEvent being called before the state had actually changed.
+Added SetStateEntering and SetStateLeaving methods.</PackageReleaseNotes>
+    <Version>2.0.0-pre7</Version>
+    <Authors>Keith Pickford</Authors>
     <AssemblyVersion></AssemblyVersion>
     <FileVersion></FileVersion>
     <Product>FunctionZero.$(AssemblyName)</Product>
     <PackageId>FunctionZero.$(AssemblyName)</PackageId>
+    <Company>Function Zero Ltd</Company>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\StateMachineZero\readme.md">
+    <None Include="..\readme.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
