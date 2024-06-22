@@ -11,7 +11,7 @@
     <PackageTags>StateMachine State machine</PackageTags>
     <PackageReleaseNotes>Fixed SetStateLeaveEvent being called before the state had actually changed.
 Added SetStateEntering and SetStateLeaving methods.</PackageReleaseNotes>
-    <Version>2.0.0-pre7</Version>
+    <Version>2.0.0-pre9</Version>
     <Authors>Keith Pickford</Authors>
     <AssemblyVersion></AssemblyVersion>
     <FileVersion></FileVersion>

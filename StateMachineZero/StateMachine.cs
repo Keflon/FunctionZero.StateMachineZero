@@ -6,8 +6,8 @@ using System.Runtime.CompilerServices;
 
 namespace FunctionZero.StateMachineZero
 {
-    public class StateMachine<TState, TMessage, TPayload> 
-        : INotifyPropertyChanged 
+    public class StateMachine<TState, TMessage, TPayload>
+        : INotifyPropertyChanged
         where TState : Enum where TMessage : Enum
     {
         private readonly MessageQueue _messageQueue;
@@ -16,7 +16,6 @@ namespace FunctionZero.StateMachineZero
 
         private readonly Dictionary<TState, StateAction> _allStatesEntering;
         private readonly Dictionary<TState, StateAction> _allStatesLeaving;
-
 
         private TState _state;
 
@@ -119,17 +118,17 @@ namespace FunctionZero.StateMachineZero
         /// <param name="message"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        private bool GetNextState(TMessage message, TPayload payload, ref TState state)
-        {
-            GetStateDelegate nextStateGetter;
+        //private bool GetNextState(TMessage message, TPayload payload, ref TState state)
+        //{
+        //    GetStateDelegate nextStateGetter;
 
-            if (!_stateTransitions.TryGetValue(new StateTransition<TState, TMessage>(State, message), out nextStateGetter))
-            {
-                return false;
-            }
-            state = nextStateGetter(message, payload);
-            return true;
-        }
+        //    if (!_stateTransitions.TryGetValue(new StateTransition<TState, TMessage>(State, message), out nextStateGetter))
+        //    {
+        //        return false;
+        //    }
+        //    state = nextStateGetter(message, payload);
+        //    return true;
+        //}
 
         protected virtual void OnNotifyStateChanging(StateChangeEventArgs<TState, TMessage, TPayload> e)
         {
@@ -164,7 +163,8 @@ namespace FunctionZero.StateMachineZero
 
             TState oldState = State;
             bool faulted = false;
-            if (GetNextState(message, messagePayload, ref nextState) == false)
+            //if (GetNextState(message, messagePayload, ref nextState) == false)
+            if (!_stateTransitions.TryGetValue(new StateTransition<TState, TMessage>(State, message), out var nextStateGetter))
             {
                 var faultEventArgs = new BadTransitionEventArgs<TState, TMessage, TPayload>(State, message, messagePayload);
 
@@ -180,7 +180,16 @@ namespace FunctionZero.StateMachineZero
                 nextState = faultEventArgs.RequestedState.State;
                 messagePayload = faultEventArgs.RequestedState.Payload;
             }
-
+            else if (nextStateGetter != null)
+            {
+                nextState = nextStateGetter(message, messagePayload);
+            }
+            else
+            {
+                // If a transition has no getter, it just swallows the message.
+                _reentrancyGuard = false;
+                return;
+            }
             // Notify even if state isn't changing / hasn't changed.
             OnNotifyStateChanging(new StateChangeEventArgs<TState, TMessage, TPayload>(nextState, oldState, message, StateChangeMode.Changing, messagePayload, faulted));
             State = nextState; // This is where the state is changed.	

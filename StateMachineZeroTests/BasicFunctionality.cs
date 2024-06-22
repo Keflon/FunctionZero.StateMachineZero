@@ -255,7 +255,7 @@ namespace StateMachineZeroTests
             var machine = new StateMachine<States, Messages, object>(q, States.A, "");
             StringBuilder sb = new StringBuilder();
 
-            machine.SetStateEnterEvent(States.A, (fromState, toState, payload) => sb.Append("1"));
+            machine.SetStateEnterEvent(States.A, (fromState, toState, payload) => sb.Append('1'));
 
             machine.Add(States.A, Messages.a, States.B);
             machine.Add(States.B, Messages.b, States.C);
@@ -263,22 +263,22 @@ namespace StateMachineZeroTests
             machine.Add(States.D, Messages.d, States.E);
             machine.Add(States.E, Messages.e, States.A);
 
-            machine.SetStateEnterEvent(States.B, (fromState, toState, payload) => sb.Append("2"));
-            machine.SetStateEnterEvent(States.C, (fromState, toState, payload) => sb.Append("3"));
+            machine.SetStateEnterEvent(States.B, (fromState, toState, payload) => sb.Append('2'));
+            machine.SetStateEnterEvent(States.C, (fromState, toState, payload) => sb.Append('3'));
             // 
             machine.Add(States.A, Messages.b, States.B);
             machine.Add(States.A, Messages.c, States.B);
             machine.Add(States.A, Messages.d, States.B);
             machine.Add(States.A, Messages.e, States.B);
 
-            machine.SetStateEnterEvent(States.D, (fromState, toState, payload) => sb.Append("4"));
+            machine.SetStateEnterEvent(States.D, (fromState, toState, payload) => sb.Append('4'));
 
             machine.Add(States.B, Messages.a, States.B);
             machine.Add(States.B, Messages.c, States.B);
             machine.Add(States.B, Messages.d, States.B);
             machine.Add(States.B, Messages.e, States.B);
 
-            machine.SetStateEnterEvent(States.E, (fromState, toState, payload) => sb.Append("5"));
+            machine.SetStateEnterEvent(States.E, (fromState, toState, payload) => sb.Append('5'));
 
             machine.Add(States.C, Messages.a, States.B);
             machine.Add(States.C, Messages.b, States.B);
@@ -303,6 +303,75 @@ namespace StateMachineZeroTests
             Assert.AreEqual(machine.State, States.A);
 
             Assert.AreEqual("23451", sb.ToString());
+        }
+
+        [TestMethod]
+        public void TestSwallowedMessages()
+        {
+            MessageQueue q = new MessageQueue();
+            var machine = new StateMachine<States, Messages, object>(q, States.A, "");
+
+            int transition = 0;
+
+            machine.StateChanging += (sender, e) => transition++;
+
+            machine.Add(States.A, Messages.a, States.B);
+            machine.Add(States.B, Messages.b, States.C);
+            machine.Add(States.C, Messages.c, States.D);
+            machine.Add(States.D, Messages.d, States.E);
+
+            machine.Add(States.A, Messages.e, null);
+            machine.Add(States.B, Messages.e, null);
+            machine.Add(States.C, Messages.e, null);
+            machine.Add(States.D, Messages.e, null);
+            machine.Add(States.E, Messages.e, null);
+
+            int temp;
+
+            temp = transition;
+            States state;
+
+            state = machine.State;
+            temp = transition;
+            machine.PostMessage(Messages.e);
+            Assert.AreEqual(machine.State, state);
+            Assert.AreEqual(temp, transition);
+
+            machine.PostMessage(Messages.a);
+            Assert.AreEqual(machine.State, States.B);
+
+            state = machine.State;
+            temp = transition;
+            machine.PostMessage(Messages.e);
+            Assert.AreEqual(machine.State, state);
+            Assert.AreEqual(temp, transition);
+
+            machine.PostMessage(Messages.b);
+            Assert.AreEqual(machine.State, States.C);
+
+            state = machine.State;
+            temp = transition;
+            machine.PostMessage(Messages.e);
+            Assert.AreEqual(machine.State, state);
+            Assert.AreEqual(temp, transition);
+
+            machine.PostMessage(Messages.c);
+            Assert.AreEqual(machine.State, States.D);
+
+            state = machine.State;
+            temp = transition;
+            machine.PostMessage(Messages.e);
+            Assert.AreEqual(machine.State, state);
+            Assert.AreEqual(temp, transition);
+
+            machine.PostMessage(Messages.d);
+            Assert.AreEqual(machine.State, States.E);
+
+            state = machine.State;
+            temp = transition;
+            machine.PostMessage(Messages.e);
+            Assert.AreEqual(machine.State, state);
+            Assert.AreEqual(temp, transition);
         }
     }
 }
