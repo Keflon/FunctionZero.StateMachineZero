@@ -1,37 +1,47 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <PackageIcon>F0 gravatar.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</PackageProjectUrl>
-    <Copyright>2024 FunctionZero Ltd.</Copyright>
-    <Description>A highly configurable finite-state-machine implementation with pre-registered transitions.</Description>
-    <PackageReadmeFile>readme.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</RepositoryUrl>
-    <PackageTags>StateMachine State machine</PackageTags>
-    <PackageReleaseNotes>Fixed SetStateLeaveEvent being called before the state had actually changed.
-Added SetStateEntering and SetStateLeaving methods.</PackageReleaseNotes>
-    <Version>2.0.0-pre9</Version>
-    <Authors>Keith Pickford</Authors>
-    <AssemblyVersion></AssemblyVersion>
-    <FileVersion></FileVersion>
-    <Product>FunctionZero.$(AssemblyName)</Product>
-    <PackageId>FunctionZero.$(AssemblyName)</PackageId>
-    <Company>Function Zero Ltd</Company>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<PackageIcon>F0 gravatar.png</PackageIcon>
+		<PackageProjectUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</PackageProjectUrl>
+		<Copyright>2024 FunctionZero Ltd.</Copyright>
+		<Description>A highly configurable finite-state-machine implementation with pre-registered transitions.</Description>
+		<PackageReadmeFile>readme.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/Keflon/FunctionZero.StateMachineZero</RepositoryUrl>
+		<PackageTags>StateMachine State machine</PackageTags>
+		<PackageReleaseNotes>
+			Fixed SetStateLeaveEvent being called before the state had actually changed.
+			Added SetStateEntering and SetStateLeaving methods.
+		</PackageReleaseNotes>
+		<Version>2.0.0</Version>
+		<Authors>Keith Pickford</Authors>
+		<AssemblyVersion></AssemblyVersion>
+		<FileVersion></FileVersion>
+		<Product>FunctionZero.$(AssemblyName)</Product>
+		<PackageId>FunctionZero.$(AssemblyName)</PackageId>
+		<Company>Function Zero Ltd</Company>
+		<PackageLicenseFile>License.txt</PackageLicenseFile>
+		<PackageOutputPath>C:\Users\kpick\OneDrive - Function Zero Ltd\FunctionZeroBuildResources\NuGet</PackageOutputPath>
+		<IncludeSymbols>True</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\readme.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\readme.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="F0 gravatar.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="F0 gravatar.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Update="License.txt">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
 
 </Project>
